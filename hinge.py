@@ -10,11 +10,9 @@ MIN_ANGLE = 20
 MAX_ANGLE = 128
 MOVE_THRESHOLD = 1.5
 
-# Speed thresholds (degrees per poll interval)
 SLOW_SPEED = 2
 FAST_SPEED = 15
 
-# How many consecutive still polls before we consider movement stopped
 STILL_POLLS_TO_STOP = 1
 
 sounds = [f for f in os.listdir(SOUND_FOLDER) if f.endswith(".mp3")]
@@ -28,7 +26,7 @@ last_play_time = 0
 saved_volume = subprocess.run(
     ["osascript", "-e", "output volume of (get volume settings)"],
     capture_output=True, text=True
-).stdout.strip()  # cached at startup
+).stdout.strip()  # cached
 
 
 def set_system_volume(vol):
@@ -56,7 +54,7 @@ def speed_to_rate(speed):
     return 0.8 + t * 0.8
 
 
-MIN_GAP = 0.3  # fixed 300ms gap after every sound
+MIN_GAP = 0.3  
 
 
 def play_sound(speed):
@@ -75,9 +73,8 @@ def play_sound(speed):
 def stop_sound():
     global sound_process
     if sound_process and sound_process.poll() is None:
-        sound_process.kill()  # immediate stop
+        sound_process.kill() 
     sound_process = None
-    # Restore user's original volume
     set_system_volume(saved_volume)
 
 
@@ -104,7 +101,6 @@ with LidSensor() as sensor:
             sound_playing = sound_process is not None and sound_process.poll() is None
 
             if direction_changed:
-                # direction reversed — kill current sound and play immediately
                 stop_sound()
                 play_sound(speed)
             elif not sound_playing and (now - last_play_time) >= MIN_GAP:
@@ -112,7 +108,6 @@ with LidSensor() as sensor:
 
         else:
             still_counter += 1
-            # let the current clip finish naturally, only stop after sustained stillness
             if still_counter >= STILL_POLLS_TO_STOP:
                 stop_sound()
 
