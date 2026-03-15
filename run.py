@@ -4,7 +4,8 @@ import os
 import time
 from pybooklid import LidSensor
 
-SOUND_FOLDER = "sounds"
+SOUND_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sounds")
+subprocess.run(["osascript", "-e", "set volume output volume 100"])
 
 MIN_ANGLE = 20
 MAX_ANGLE = 128
