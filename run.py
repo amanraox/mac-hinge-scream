@@ -14,12 +14,13 @@ MOVE_THRESHOLD = 1.5
 SLOW_SPEED = 2
 FAST_SPEED = 15
 
-# How many consecutive still polls before we consider movement stopped
+# consecutive still polls before we consider movement stopped
 STILL_POLLS_TO_STOP = 1
 
 sounds = [f for f in os.listdir(SOUND_FOLDER) if f.endswith(".mp3")]
 
 last_angle = None
+last_direction = None  # 1 = opening, -1 =closing
 last_sound = None
 sound_process = None
 still_counter = 0
@@ -47,7 +48,7 @@ def speed_to_rate(speed):
     return 0.8 + t * 0.8
 
 
-MIN_GAP = 0.3  # fixed 300ms gap after every sound
+MIN_GAP = 0.3 
 
 
 def play_sound(speed):
@@ -65,7 +66,7 @@ def play_sound(speed):
 def stop_sound():
     global sound_process
     if sound_process and sound_process.poll() is None:
-        sound_process.kill()  # immediate stop
+        sound_process.kill()
     sound_process = None
 
 
@@ -85,15 +86,20 @@ with LidSensor() as sensor:
         if hinge_moving:
             still_counter = 0
             now = time.monotonic()
+            direction = 1 if angle > last_angle else -1
+            direction_changed = last_direction is not None and direction != last_direction
+            last_direction = direction
+
             sound_playing = sound_process is not None and sound_process.poll() is None
 
-            # only play a new sound if nothing is currently playing AND enough time passed
-            if not sound_playing and (now - last_play_time) >= MIN_GAP:
+            if direction_changed:
+                stop_sound()
+                play_sound(speed)
+            elif not sound_playing and (now - last_play_time) >= MIN_GAP:
                 play_sound(speed)
 
         else:
             still_counter += 1
-            # let the current clip finish naturally, only stop after sustained stillness
             if still_counter >= STILL_POLLS_TO_STOP:
                 stop_sound()
 
